@@ -1,6 +1,0 @@
-GET http://localhost:8000/create/articles
-Content-Type: application/json
-
-{
-    
-}
