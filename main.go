@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"os"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/log"
@@ -18,8 +19,12 @@ type Question struct {
 }
 
 func main() {
-	connStr := "postgres://juansebas053cr__vert__84ydd:V&Hs0cwNR9jj@198.54.124.77:5432/pin21021_Agile_Antelopes"
-	db, err := sql.Open("pgx", connStr)
+	databaseuri := os.Getenv("DATABASE_URI")
+	if databaseuri == "" {
+		log.Fatal("DATABASE_URI environment variable is not set")
+		return
+	}
+	db, err := sql.Open("pgx", databaseuri)
 	if err != nil {
 		log.Fatalf("Error connecting to database: %v", err)
 	}
