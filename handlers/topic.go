@@ -12,7 +12,6 @@ type BulkTopicPayload struct {
 	Topics []string `json:"topics"`
 }
 
-// CreateTopics recibe un array de categorías y las inserta en "topic_tag-A"
 func CreateTopics(db *sql.DB) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		var payload BulkTopicPayload
@@ -25,14 +24,12 @@ func CreateTopics(db *sql.DB) fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "No topics provided"})
 		}
 
-		// Usamos una transacción para asegurarnos de que se inserten todos o ninguno
 		tx, err := db.Begin()
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to start transaction"})
 		}
 		defer tx.Rollback()
 
-		// Omitimos topic_tag_id para que Postgres lo genere automáticamente (GENERATED ALWAYS)
 		query := `INSERT INTO worldloom."topic_tag-A" (topic_tag) VALUES ($1)`
 
 		for _, topic := range payload.Topics {

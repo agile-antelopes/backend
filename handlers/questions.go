@@ -8,8 +8,6 @@ import (
 	"github.com/gofiber/fiber/v3/log"
 )
 
-// --- DTOs (Data Transfer Objects) ---
-
 type CountryPayload struct {
 	CountryCode string            `json:"country_code"`
 	CountryName string            `json:"country_name"`
@@ -29,7 +27,6 @@ type InterviewPayload struct {
 	Responses       []ResponsePayload `json:"responses"`
 }
 
-// --- DTOs para las respuestas ---
 type CountryResponse struct {
 	CountryCode string `json:"country_code"`
 	CountryName string `json:"country_name"`
@@ -47,13 +44,11 @@ type QuestionResponse struct {
 	QuestionText string `json:"question_text"`
 }
 
-// --- DTO para la pregunta ---
 type QuestionPayload struct {
 	TopicTagID   int    `json:"topic_tag_id"`
 	QuestionText string `json:"question_text"`
 }
 
-// CreateQuestion recibe el Formulario 3 y guarda en la tabla question_template
 func CreateQuestion(db *sql.DB) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		var payload QuestionPayload
@@ -62,13 +57,12 @@ func CreateQuestion(db *sql.DB) fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 		}
 
-		// Validamos que no vengan campos vacíos
 		if payload.TopicTagID == 0 || payload.QuestionText == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "topic_tag_id and question_text are required"})
 		}
 
 		var newID int
-		// Usamos RETURNING para obtener el ID que PostgreSQL genera automáticamente
+
 		query := `
 			INSERT INTO worldloom.question_template (topic_tag_id, question_text) 
 			VALUES ($1, $2) 
@@ -88,9 +82,6 @@ func CreateQuestion(db *sql.DB) fiber.Handler {
 	}
 }
 
-// --- HANDLERS GET ---
-
-// GetCountries extrae todos los países del esquema worldloom
 func GetCountries(db *sql.DB) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		rows, err := db.Query(`SELECT country_code, country_name, facts FROM worldloom.country ORDER BY country_name ASC`)
@@ -114,7 +105,6 @@ func GetCountries(db *sql.DB) fiber.Handler {
 	}
 }
 
-// GetTopics extrae todas las categorías
 func GetTopics(db *sql.DB) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		rows, err := db.Query(`SELECT topic_tag_id, topic_tag FROM worldloom."topic_tag-A" ORDER BY topic_tag_id ASC`)
@@ -138,7 +128,6 @@ func GetTopics(db *sql.DB) fiber.Handler {
 	}
 }
 
-// GetQuestions extrae el banco de preguntas (plantillas)
 func GetQuestions(db *sql.DB) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		rows, err := db.Query(`SELECT question_id, topic_tag_id, question_text FROM worldloom.question_template ORDER BY topic_tag_id ASC`)
@@ -162,25 +151,19 @@ func GetQuestions(db *sql.DB) fiber.Handler {
 	}
 }
 
-// --- HANDLERS ---
-
-// CreateCountry recibe el Formulario 2 y guarda en la tabla `country`
 func CreateCountry(db *sql.DB) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		var payload CountryPayload
 
-		// Parseamos el JSON del frontend
 		if err := json.Unmarshal(c.Body(), &payload); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 		}
 
-		// Convertimos el map de details a un string JSON para la columna 'facts'
 		factsJSON, err := json.Marshal(payload.Details)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to process facts"})
 		}
 
-		// Insertamos en la BD
 		query := `INSERT INTO worldloom."country" (country_code, country_name, facts) VALUES ($1, $2, $3)`
 		_, err = db.Exec(query, payload.CountryCode, payload.CountryName, string(factsJSON))
 		if err != nil {
@@ -192,7 +175,6 @@ func CreateCountry(db *sql.DB) fiber.Handler {
 	}
 }
 
-// CreateInterview recibe el Formulario 1 y guarda en `interview-A` y `response-A`
 func CreateInterview(db *sql.DB) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		var payload InterviewPayload
@@ -201,15 +183,13 @@ func CreateInterview(db *sql.DB) fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 		}
 
-		// Iniciamos una transacción. Todo o nada.
 		tx, err := db.Begin()
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to start transaction"})
 		}
-		// Defer para hacer Rollback si la función termina con un panic o un error no manejado
+
 		defer tx.Rollback()
 
-		// 1. Insertar la Entrevista (Usamos CURRENT_DATE para la fecha y obtenemos el ID generado)
 		var interviewID int
 		interviewQuery := `
 			INSERT INTO worldloom."interview-A" (interviewer_name, interviewee_name, country_id, date) 
@@ -222,13 +202,12 @@ func CreateInterview(db *sql.DB) fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to save interview"})
 		}
 
-		// 2. Insertar cada una de las respuestas iterando sobre el array
 		responseQuery := `
 			INSERT INTO worldloom."response-A" (interview_id, country_id, topic_tag_id, question, answer) 
 			VALUES ($1, $2, $3, $4, $5)
 		`
 		for _, resp := range payload.Responses {
-			// Solo insertamos si realmente hay una respuesta
+
 			if resp.Answer != "" {
 				_, err = tx.Exec(responseQuery, interviewID, payload.CountryID, resp.TopicTagID, resp.Question, resp.Answer)
 				if err != nil {
@@ -238,7 +217,6 @@ func CreateInterview(db *sql.DB) fiber.Handler {
 			}
 		}
 
-		// 3. Si todo salió bien, hacemos Commit a la base de datos
 		if err := tx.Commit(); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Transaction failed"})
 		}

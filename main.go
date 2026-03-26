@@ -23,12 +23,10 @@ func main() {
 		AllowHeaders: []string{"Origin, Content-Type, Accept"},
 	}))
 
-	// Rutas GET
 	app.Get("/countries", handlers.GetCountries(db))
 	app.Get("/topics", handlers.GetTopics(db))
 	app.Get("/questions", handlers.GetQuestions(db))
 
-	// Rutas POST (Las que ya teníamos)
 	app.Post("/countries", handlers.CreateCountry(db))
 	app.Post("/interviews", handlers.CreateInterview(db))
 	app.Post("/topics", handlers.CreateTopics(db))
