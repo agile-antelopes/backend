@@ -26,6 +26,7 @@ func main() {
 	app.Get("/countries", handlers.GetCountries(db))
 	app.Get("/topics", handlers.GetTopics(db))
 	app.Get("/questions", handlers.GetQuestions(db))
+	app.Get("/countries/:code", handlers.GetCountryFullDetails(db))
 
 	app.Post("/countries", handlers.CreateCountry(db))
 	app.Post("/interviews", handlers.CreateInterview(db))

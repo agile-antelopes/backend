@@ -92,3 +92,9 @@ Content-Type: application/json
     "Follow-Up"
   ]
 }
+
+### --------------------------------------------------
+
+### 6. Obtener un País específico (Para verificar que se creó correctamente)
+GET http://localhost:3001/countries/JPN
+Accept: application/json
