@@ -1,62 +1,41 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
-	"os"
+	"backend/database"
+	"backend/handlers"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/log"
+	"github.com/gofiber/fiber/v3/middleware/cors"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-type Question struct {
-	Id       int    `json:"id"`
-	Question string `json:"question"`
-	Answer   string `json:"answer"`
-	Country  string `json:"country"`
-	UserName string `json:"username"`
-}
-
 func main() {
-	databaseuri := os.Getenv("DATABASE_URI")
-	if databaseuri == "" {
-		log.Fatal("DATABASE_URI environment variable is not set")
-		return
-	}
-	db, err := sql.Open("pgx", databaseuri)
+	db, err := database.GetConnection()
 	if err != nil {
-		log.Fatalf("Error connecting to database: %v", err)
+		log.Fatal(err)
 	}
 
-	defer db.Close()
-
-	err = db.Ping()
-	if err != nil {
-
-	}
-
-	fmt.Println("¡Conexión a PostgreSQL establecida con éxito!")
 	app := fiber.New()
 
-	app.Post("/question/save", func(c fiber.Ctx) error {
-		var question Question
-		err := c.Bind().Body(&question)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "Invalid request body",
-			})
-		}
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: []string{"http://localhost:5173"},
+		AllowHeaders: []string{"Origin, Content-Type, Accept"},
+	}))
 
-		fmt.Println("Save into database...")
+	// Rutas GET
+	app.Get("/countries", handlers.GetCountries(db))
+	app.Get("/topics", handlers.GetTopics(db))
+	app.Get("/questions", handlers.GetQuestions(db))
 
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"success": "Saved question",
-		})
-	})
+	// Rutas POST (Las que ya teníamos)
+	app.Post("/countries", handlers.CreateCountry(db))
+	app.Post("/interviews", handlers.CreateInterview(db))
+	app.Post("/topics", handlers.CreateTopics(db))
+	app.Post("/questions", handlers.CreateQuestion(db))
 
-	err = app.Listen(":3000")
+	err = app.Listen(":3001")
 	if err != nil {
-		return
+		log.Fatal(err)
 	}
 }

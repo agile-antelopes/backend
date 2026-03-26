@@ -1,0 +1,94 @@
+### Variables
+@baseUrl = http://localhost:3001
+
+### 1. Obtener las preguntas (Endpoint existente)
+GET {{baseUrl}}/questions
+Accept: application/json
+
+### --------------------------------------------------
+
+### 2. Crear un País (Formulario 2)
+POST {{baseUrl}}/countries
+Content-Type: application/json
+
+{
+  "country_code": "MEX",
+  "country_name": "Mexico",
+  "details": {
+    "language": "Spanish",
+    "population": "128.9 million",
+    "governmentType": "Federal Republic",
+    "currency": "Mexican Peso",
+    "typicalFood": "Tacos, Mole, Tamales",
+    "climate": "Varies from tropical to desert"
+  }
+}
+
+### --------------------------------------------------
+
+### 3. Crear otro País (Para tener variedad)
+POST {{baseUrl}}/countries
+Content-Type: application/json
+
+{
+  "country_code": "JPN",
+  "country_name": "Japan",
+  "details": {
+    "language": "Japanese",
+    "currency": "Yen",
+    "typicalFood": "Sushi, Ramen",
+    "transport": "Shinkansen (Bullet Train)"
+  }
+}
+
+### --------------------------------------------------
+
+### 4. Crear una Entrevista con Respuestas (Formulario 1)
+# Asegúrate de enviar un country_id que ya exista en la BD (como MEX o JPN)
+# y topic_tag_ids que existan en tu tabla topic_tag-A
+POST {{baseUrl}}/interviews
+Content-Type: application/json
+
+{
+  "interviewer_name": "Alice Developer",
+  "interviewee_name": "Juan Pérez",
+  "country_id": "MEX",
+  "responses": [
+    {
+      "topic_tag_id": 1,
+      "question": "What surprised you the most about the culture?",
+      "answer": "The warmth and hospitality of the people everywhere I went."
+    },
+    {
+      "topic_tag_id": 2,
+      "question": "What was your favorite local dish?",
+      "answer": "Definitely the authentic street tacos al pastor."
+    },
+    {
+      "topic_tag_id": 1,
+      "question": "Any common phrases you learned?",
+      "answer": ""
+    }
+  ]
+}
+
+### --------------------------------------------------
+
+### 5. Insertar todas las categorías (Topics)
+POST {{baseUrl}}/topics
+Content-Type: application/json
+
+{
+  "topics": [
+    "Background & Location",
+    "Core Cultural Values & Beliefs",
+    "Daily Life & Society",
+    "Greetings, Manners & Social Etiquette",
+    "Food & Traditions",
+    "Practical Travel Considerations",
+    "Language & Slang",
+    "Cultural Adjustment Experience (BYUI / Mission Context)",
+    "Reflection & Advice",
+    "Follow-Up"
+  ]
+}
