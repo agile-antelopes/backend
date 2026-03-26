@@ -3,6 +3,7 @@ package main
 import (
 	"backend/database"
 	"backend/handlers"
+	"os"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/log"
@@ -33,7 +34,11 @@ func main() {
 	app.Post("/topics", handlers.CreateTopics(db))
 	app.Post("/questions", handlers.CreateQuestion(db))
 
-	err = app.Listen(":3001")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3001"
+	}
+	err = app.Listen(":" + port)
 	if err != nil {
 		log.Fatal(err)
 	}
